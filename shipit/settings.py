@@ -10,7 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -112,7 +114,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = config('DJANGO_TIME_ZONE', default='Africa/Lagos')
 
 USE_I18N = True
 
@@ -123,6 +125,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    'default': {'BACKEND': 'django.core.files.storage.FileSystemStorage'},
+    'staticfiles': {'BACKEND': 'whitenoise.storage.CompressedStaticFilesStorage'},
+}
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -130,8 +137,72 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS' : 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE' : 10
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    # Authenticated by default. What each role can do is enforced per endpoint,
+    # and public endpoints (tracking, quotes, health) opt in explicitly.
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated'],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_RATES': {
+        'tracking': config('THROTTLE_TRACKING', default = '60/min'),
+        'quote': config('THROTTLE_QUOTE', default='30/min'),
+        'auth': config('THROTTLE_AUTH', default='10/min'),
+    },
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ShipIt API',
+    'DESCRIPTION': (
+        'Shipment booking, pricing, payments and tracking.\n\n'
+        '**Authenticate:** `POST /api/auth/token/` to get a token, then click *Authorize* '
+        'and enter `Token <your token>`. The public endpoints (`/api/track/…`, `/api/quotes/`) need no token.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+}
+
+DEFAULT_CURRENCY = config('DEFAULT_CURRENCY', 'NGN')
+
+# Where customers can view a shipment. Used in emails, SMS and the label's QR code.
+# Point this at your frontend's tracking page once you have one.
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000').rstrip('/')
+TRACKING_URL_TEMPLATE = config('TRACKING_URL_TEMPLATE', SITE_URL + '/api/track/{tracking_id}/')
+
+# Paystack: https://dashboard.paystack.com/#/settings/developers
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', '')
+PAYMENT_CALLBACK_URL = os.environ.get('PAYMENT_CALLBACK_URL', '')
+
+NOTIFICATIONS_ENABLED = env_bool('NOTIFICATIONS_ENABLED', True)
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'ShipIt <noreply@shipit.local>')
+# Dotted path to a class with a send(to, message) method. Swap in Termii, Twilio, etc.
+SMS_BACKEND = os.environ.get('SMS_BACKEND', 'tracking.notifications.ConsoleSMSBackend')
+
+
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    # Opt-in so a fresh deploy can't lock you out before HTTPS is working:
+    SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {'console': {'class': 'logging.StreamHandler'}},
+    'root': {'handlers': ['console'], 'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')},
 }
 
 
