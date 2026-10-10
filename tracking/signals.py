@@ -1,8 +1,13 @@
-from django.dispatch import receiver
+from django.conf import settings
 from django.db.models.signals import post_save
-from .models import TrackingHistory
+from django.dispatch import receiver
 
-@receiver(post_save, sender='tracking.Shipment')
-def add_history(sender, instance, **kwargs):
-    print("Working")
-    TrackingHistory.objects.create(shipment = instance, status = instance.status, timestamp = instance.updated_at )
+from .models import Profile
+
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_profile(sender, instance, created, **kwargs):
+    """Every user gets a Profile (default role: customer)."""
+    if created:
+        role = Profile.Role.STAFF if instance.is_staff else Profile.Role.CUSTOMER
+        Profile.objects.get_or_create(user=instance, defaults={'role': role})
