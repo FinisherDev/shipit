@@ -4,15 +4,16 @@ A shipment tracking API built with Django and Django REST Framework. Staff creat
 shipments and update their status; every status change is recorded in a tracking
 history so the full journey of a package can be replayed.
 
-> Status: early development. A public tracking page, booking flow, and payments are planned (see Roadmap).
-
 ## Features
 
 - Auto-generated tracking IDs (`SHIP-XXXXXXXXXX`)
 - Automatic status history on every change, from the API, admin, or scripts
+- Price generation as per kg of shipment ordered
 - Search, filter, and ordering on the shipment list
 - Token authentication; the API is staff-only by default
 - Test suite covering models, permissions, and the API
+
+> See Roadmap for further details.
 
 ## Tech stack
 
