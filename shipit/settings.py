@@ -174,19 +174,19 @@ SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000').rstrip('/')
 TRACKING_URL_TEMPLATE = config('TRACKING_URL_TEMPLATE', SITE_URL + '/api/track/{tracking_id}/')
 
 # Paystack: https://dashboard.paystack.com/#/settings/developers
-PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', '')
-PAYMENT_CALLBACK_URL = os.environ.get('PAYMENT_CALLBACK_URL', '')
+PAYSTACK_SECRET_KEY = config('PAYSTACK_SECRET_KEY', '')
+PAYMENT_CALLBACK_URL = config('PAYMENT_CALLBACK_URL', '')
 
-NOTIFICATIONS_ENABLED = env_bool('NOTIFICATIONS_ENABLED', True)
-EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = env_bool('EMAIL_USE_TLS', True)
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'ShipIt <noreply@shipit.local>')
+NOTIFICATIONS_ENABLED = config('NOTIFICATIONS_ENABLED', True)
+EMAIL_BACKEND = config('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', '')
+EMAIL_PORT = int(config('EMAIL_PORT', '587'))
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', '')
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', True)
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', 'ShipIt <noreply@shipit.local>')
 # Dotted path to a class with a send(to, message) method. Swap in Termii, Twilio, etc.
-SMS_BACKEND = os.environ.get('SMS_BACKEND', 'tracking.notifications.ConsoleSMSBackend')
+SMS_BACKEND = config('SMS_BACKEND', 'tracking.notifications.ConsoleSMSBackend')
 
 
 if not DEBUG:
@@ -195,14 +195,14 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_CONTENT_TYPE_NOSNIFF = True
     # Opt-in so a fresh deploy can't lock you out before HTTPS is working:
-    SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', False)
-    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
+    SECURE_SSL_REDIRECT = config('DJANGO_SECURE_SSL_REDIRECT', False)
+    SECURE_HSTS_SECONDS = int(config('DJANGO_HSTS_SECONDS', '0'))
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {'console': {'class': 'logging.StreamHandler'}},
-    'root': {'handlers': ['console'], 'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')},
+    'root': {'handlers': ['console'], 'level': config('DJANGO_LOG_LEVEL', 'INFO')},
 }
 
 
