@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: shipit
+          POSTGRES_USER: shipit
+          POSTGRES_PASSWORD: shipit
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U shipit" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-a-real-secret
+      DATABASE_URL: postgres://shipit:shipit@localhost:5432/shipit
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Django system check
+        run: python manage.py check
+      - name: Migrations are up to date
+        run: python manage.py makemigrations --check --dry-run
+      - name: OpenAPI schema is valid
+        run: python manage.py spectacular --validate --fail-on-warn --file /dev/null
+      - name: Tests
+        run: python manage.py test
